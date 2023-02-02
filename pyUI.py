@@ -36,9 +36,12 @@ class Ui_MainWindow(object):
         self.textEdit = QtWidgets.QTextEdit(self.centralwidget)
         self.textEdit.setGeometry(QtCore.QRect(10, 200, 421, 161))
         self.textEdit.setObjectName("textEdit")
+
         self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_2.setGeometry(QtCore.QRect(10, 40, 161, 21))
         self.pushButton_2.setObjectName("pushButton_2")
+        self.pushButton_2.clicked.connect(self.connectSerial)
+
         self.label_14 = QtWidgets.QLabel(self.centralwidget)
         self.label_14.setGeometry(QtCore.QRect(10, 10, 94, 20))
         self.label_14.setObjectName("label_14")
@@ -48,11 +51,6 @@ class Ui_MainWindow(object):
         for x in range(len(result)):
             name = result[x]
             self.cb_Port.addItem(name)
-
-        # self.cb_Port.addItem("")
-        # self.cb_Port.addItem("")
-        # self.cb_Port.addItem("")
-        # self.cb_Port.addItem("")
 
         self.pushButton_5 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_5.setGeometry(QtCore.QRect(10, 370, 121, 31))
@@ -66,12 +64,18 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
-
-        
-            
+        self.serialStatus = 0
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def connectSerial(self):
+        if (self.serialStatus == 0):
+            self.pushButton_2.setText("Disconnect")
+            self.serialStatus = 1
+        else:
+            self.pushButton_2.setText("Connect")
+            self.serialStatus = 0
 
 
     def retranslateUi(self, MainWindow):
