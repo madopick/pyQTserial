@@ -57,6 +57,8 @@ def serial_ports():
             portindex += 1
     return result
 
+
+
 class Worker(QObject):
     finished = pyqtSignal()
     intReady = pyqtSignal(str)
@@ -92,17 +94,25 @@ class qt(QMainWindow):
         self.thread = None
         self.worker = None
         self.pushButton.clicked.connect(self.start_loop)
+        self.pb_cfg1.clicked.connect(self.send_cfg1)
         self.pushBtnClicked = False
         self.CopyFlag = 0
         self.ConnectStatus = 0
+        self.Port = "UART"
 
         # global result
         print("Available ports:" + str(serial_ports()))
         for x in range(len(result)):
             name = result[x]
             self.cb_Port.addItem(name)
-
+        self.cb_Port.addItem("USB")
         print('QT init')
+
+    def send_cfg1(self):
+        print("send cfg1")
+        self.textEdit_3.append("Send CFG1+ \r\n")
+
+
 
     def loop_finished(self):
         print('Loop Finished')
@@ -129,8 +139,14 @@ class qt(QMainWindow):
         #Verify the correct COM Port
         try:
             mytext = "HELP\r\n"  # Send first enter
-            ser = serial.Serial(self.cb_Port.currentText(), 115200, timeout=1)  # (ports[0], 115200)    #('COM1', 115200, timeout=1)
-            ser.write(mytext.encode())
+
+            if(self.cb_Port.currentText() == "USB"):
+                print("USB HID Communication")
+                self.Port = "USB"
+            else:
+                self.Port = "UART"
+                ser = serial.Serial(self.cb_Port.currentText(), 115200, timeout=1)  # (ports[0], 115200)    #('COM1', 115200, timeout=1)
+                ser.write(mytext.encode())
 
             if(self.ConnectStatus == 0):
                 self.ConnectStatus = 1
@@ -149,19 +165,23 @@ class qt(QMainWindow):
             print('start loop')
             return
 
-        self.worker = Worker()   # a new worker to perform those tasks
-        self.thread = QThread()  # a new thread to run our background tasks in
-        self.worker.moveToThread(self.thread)  # move the worker into the thread, do this first before connecting the signals
+        if (self.Port == "UART"):
+            self.worker = Worker()                                  # a new worker to perform those tasks
+            self.thread = QThread()                                 # a new thread to run our background tasks in
+            self.worker.moveToThread(self.thread)                   # move the worker into the thread, do this first before connecting the signals
 
-        self.thread.started.connect(self.worker.work) # begin our worker object's loop when the thread starts running
+            self.thread.started.connect(self.worker.work)           # begin our worker object's loop when the thread starts running
 
-        self.worker.intReady.connect(self.onIntReady)
+            self.worker.intReady.connect(self.onIntReady)
 
-        self.worker.finished.connect(self.loop_finished)       # do something in the gui when the worker loop ends
-        self.worker.finished.connect(self.thread.quit)         # tell the thread it's time to stop running
-        self.worker.finished.connect(self.worker.deleteLater)  # have worker mark itself for deletion
-        self.thread.finished.connect(self.thread.deleteLater)  # have thread mark itself for deletion
-        self.thread.start()
+            self.worker.finished.connect(self.loop_finished)       # do something in the gui when the worker loop ends
+            self.worker.finished.connect(self.thread.quit)         # tell the thread it's time to stop running
+            self.worker.finished.connect(self.worker.deleteLater)  # have worker mark itself for deletion
+            self.thread.finished.connect(self.thread.deleteLater)  # have thread mark itself for deletion
+            self.thread.start()
+
+        else:
+            print("USB Thread here")
 
     
 
@@ -229,9 +249,9 @@ class qt(QMainWindow):
 
         #Clear serial screen
         self.textEdit_3.setText('')
-        mytext = "\n"  # Clear buffer
-        ser.write(mytext.encode())
 
+        mytext = "\r\n"  # Clear buffer
+        ser.write(mytext.encode())
         self.pushBtnClicked = True
 
     def on_pushButton_clicked(self):
